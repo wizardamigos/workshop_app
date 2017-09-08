@@ -1,0 +1,42 @@
+{
+  "name": "workshopapp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "watch": "watchify src/index.js -p [ urify-emitter -l 100 -o public/browser -b public/browser ] --it urify -p [ browserify-livereload --host 127.0.0.1 --port 1337 ] -o public/browser/bundle.js",
+    "www": "ecstatic ./ -p 5000 -H 'Access-Control-Allow-Origin: *'",
+    "start": "npm run watch & npm run www",
+    "build": "browserify -p [ urify-emitter -l 100 -o public/browser -b public/browser ] --it urify src/index.js > public/browser/bundle.js",
+    "open": "opn http://0.0.0.0:5000/ -- 'google chrome'",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wizardamigos/workshop_app.git"
+  },
+  "keywords": [
+    "javascript",
+    "workshop",
+    "tutorial"
+  ],
+  "author": "wizardamigos",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wizardamigos/workshop_app/issues"
+  },
+  "homepage": "https://github.com/wizardamigos/workshop_app#readme",
+  "devDependencies": {
+    "browserify": "^14.4.0",
+    "browserify-livereload": "^1.0.10",
+    "ecstatic": "^3.0.0",
+    "opn-cli": "^3.1.0",
+    "urify-emitter": "^1.1.2",
+    "watchify": "^3.9.0"
+  },
+  "dependencies": {
+    "bel": "^5.1.0",
+    "csjs-inject": "^1.0.1",
+    "minixhr": "^3.2.2"
+  }
+}
