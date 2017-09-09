@@ -63,6 +63,10 @@ var css = csjs`
     width: 35px;
     height: 35px;
   }
+  .logo:hover {
+    opacity: 0.9;
+    cursor: pointer;
+  }
   .banner {
     display: flex;
     align-items: center;
@@ -166,7 +170,7 @@ var videos = [
 
 var logo_url = datauri(__dirname + '/assets/wizard.png')
 var logo = bel`
-  <img class="${css.logo}" src="${logo_url}">
+  <img class="${css.logo}" onclick=${home} title = "made with love by WIzard Amigos" src="${logo_url}">
 `
 
 var lesson = 0
@@ -223,4 +227,8 @@ function iframe (src, classname) {
       allowfullscreen
     ></iframe>
   `
+}
+
+function home () {
+  location = location
 }

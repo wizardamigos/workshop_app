@@ -1132,6 +1132,10 @@ var css = csjs`
     width: 35px;
     height: 35px;
   }
+  .logo:hover {
+    opacity: 0.9;
+    cursor: pointer;
+  }
   .banner {
     display: flex;
     align-items: center;
@@ -1235,7 +1239,7 @@ var videos = [
 
 var logo_url = 'public/browser/97aa547b140480b9675e054d899cc92c.png'
 var logo = bel`
-  <img class="${css.logo}" src="${logo_url}">
+  <img class="${css.logo}" onclick=${home} title = "made with love by WIzard Amigos" src="${logo_url}">
 `
 
 var lesson = 0
@@ -1292,6 +1296,10 @@ function iframe (src, classname) {
       allowfullscreen
     ></iframe>
   `
+}
+
+function home () {
+  location = location
 }
 
 },{"bel":1,"csjs-inject":4}]},{},[24]);
