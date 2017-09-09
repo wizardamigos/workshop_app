@@ -1149,27 +1149,30 @@ var css = csjs`
   .container {
     display: flex;
     background-color: #43409a;
+    height: 100vh;
   }
   .wide {
     display: flex;
     flex-direction: column;
     width: 70%;
-    height: 90vh;
+    height: 95vh;
   }
   .narrow {
     padding: 10px;
     width: 30%;
-    height: 90vh;
+    height: 96vh;
   }
   .video {
-    padding: 10px 0 0 10px;
+    border: 5px solid white;
+    margin-top: 1%;
     width: 50%;
     align-self: center;
     height: 40vh;
     background-color: #43409a;
   }
   .editor {
-    padding: 10px 0 10px 10px;
+    border: 5px solid white;
+    margin: 1%;
     width: 100%;
     height: 55vh;
     background-color: #43409a;
@@ -1177,7 +1180,8 @@ var css = csjs`
   .chat {
     width: 100%;
     height: 100%;
-    transform: scale(0.8)
+    border: 5px solid #43409a;
+    margin: 0 0 1% 1%;
   }
 `
 
