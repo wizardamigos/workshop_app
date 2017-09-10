@@ -1101,18 +1101,17 @@ var css = csjs`
     position: relative;
     min-height: 100vh;
   }
-
   .menu {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    height: 5vh;
+    height: 10vh;
   }
   button {
     cursor: pointer;
     width: 100px;
     height: 100%;
-    font-size: 30px;
+    font-size: 20px;
     font-weight: 900;
     font-family: arial;
     border: none;
@@ -1128,40 +1127,42 @@ var css = csjs`
     width: 230px;
   }
   .logo {
-    margin-left: 20px;
-    width: 35px;
-    height: 35px;
+    margin-right: 20px;
+    width: 38px;
+    height: 38px;
   }
   .logo:hover {
     opacity: 0.9;
     cursor: pointer;
   }
   .banner {
+    margin: 0 5%;
     display: flex;
-    align-items: center;
-    align-self: center;
-    width: 400px;
-    color: #43409a;
-    font-size: 20px;
+    color: black;
+    font-size: 18px;
     font-family: arial;
     font-weight: 900;
+  }
+  .stats {
+    display: flex;
+    align-self: center;
   }
   .container {
     display: flex;
     background-color: #43409a;
-    height: 100vh;
+    height: 90vh;
   }
   .wide {
     margin: 1% 0;
     display: flex;
     flex-direction: column;
     width: 70%;
-    height: 95vh;
+    height: 85vh;
   }
   .narrow {
     margin: 1% 0 1% 2%;
-    width: 29%;
-    height: 95vh;
+    width: 27%;
+    height: 85vh;
   }
   .video {
     border: 5px solid #d6dbe1;
@@ -1178,7 +1179,7 @@ var css = csjs`
   .chat {
     border: 5px solid #d6dbe1;
     width: 100%;
-    height: 95vh;
+    height: 85vh;
   }
 `
 
@@ -1240,7 +1241,7 @@ var videos = [
 
 var logo_url = 'public/browser/97aa547b140480b9675e054d899cc92c.png'
 var logo = bel`
-  <img class="${css.logo}" onclick=${home} title = "made with love by WIzard Amigos" src="${logo_url}">
+  <img class="${css.logo}" onclick=${home} title = "made with love by Wizard Amigos" src="${logo_url}">
 `
 
 var lesson = 0
@@ -1250,13 +1251,13 @@ var editor = iframe("https://codesandbox.io/embed/748qq51066", css.editor)
 var chat = iframe("https://gitter.im/wizardamigosinstitute/program/~embed", css.chat)
 
 
-var stats = bel`<span>${series} Lesson ${lesson + 1}/${videos.length}</span>`
+var stats = bel`<span class=${css.stats}>${series} Lesson ${lesson + 1}/${videos.length}</span>`
 
 var app = bel`
   <div class="${css.content}">
     <div class=${css.menu}>
       <button onclick=${previous}> ${'<'} </button>
-      <span class=${css.banner}>${stats} ${logo}</span>
+      <span class=${css.banner}>${logo} ${stats}</span>
       <button onclick=${next}> ${'>'} </button>
     </div>
     <div class=${css.container}>
