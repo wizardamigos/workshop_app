@@ -12,6 +12,21 @@ window.addEventListener('keyup', function (event) {
   }
 })
 
+// ASSETS
+
+var FONT = 'Pixelade';
+var font_url = datauri(__dirname + '/assets/PIXELADE.ttf')
+var font = bel`
+  <style>
+    @font-face {
+      font-family: ${FONT};
+      src: url('${font_url}');
+    }
+  </style>
+`
+document.head.appendChild(font)
+
+// CSS
 var css = csjs`
   *, *:before, *:after { box-sizing: inherit; }
   img { box-sizing: content-box; }
@@ -37,20 +52,20 @@ var css = csjs`
     justify-content: space-between;
     align-items: center;
     height: 10vh;
+    border: 5px solid #d6dbe1;
   }
   button {
     cursor: pointer;
     width: 100px;
     height: 100%;
-    font-size: 20px;
+    font-size: 50px;
     font-weight: 900;
-    font-family: arial;
+    font-family: ${FONT};
     border: none;
-    background-color: #D6DBE1;
-    color: #43409a;
+    background-color: #ffd399;
+    color: white;
   }
   button:hover {
-    color: white;
     background-color: #43409a;
   }
   .header {
@@ -59,8 +74,8 @@ var css = csjs`
   }
   .logo {
     margin-right: 20px;
-    width: 38px;
-    height: 38px;
+    width: 50px;
+    height: 50px;
   }
   .logo:hover {
     opacity: 0.9;
@@ -70,8 +85,8 @@ var css = csjs`
     margin: 0 5%;
     display: flex;
     color: black;
-    font-size: 18px;
-    font-family: arial;
+    font-size:30px;
+    font-family: ${FONT};
     font-weight: 900;
   }
   .stats {
@@ -174,7 +189,6 @@ var logo_url = datauri(__dirname + '/assets/wizard.png')
 var logo = bel`
   <img class="${css.logo}" onclick=${home} title = "made with love by Wizard Amigos" src="${logo_url}">
 `
-
 var lesson = 0
 var series = 'JS workshop:'
 var video = iframe(`https://www.youtube.com/embed/${videos[0]}`, css.video)
