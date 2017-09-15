@@ -1315,7 +1315,7 @@ function iframe (src, classname) {
 }
 
 function home () {
-  location = location
+  window.open('http://wizardamigos.com/', '_blank');
 }
 
 },{"bel":1,"csjs-inject":4}]},{},[24]);

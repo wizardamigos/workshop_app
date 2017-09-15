@@ -246,5 +246,5 @@ function iframe (src, classname) {
 }
 
 function home () {
-  location = location
+  window.open('http://wizardamigos.com/', '_blank');
 }
