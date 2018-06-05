@@ -192,7 +192,7 @@ var logo = bel`
 var lesson = 0
 var series = 'JS workshop:'
 var video = iframe(`https://www.youtube.com/embed/${videos[0]}`, css.video)
-var editor = iframe("https://codesandbox.io/embed/m38n0vrm98", css.editor)
+var editor = iframe("https://codesandbox.io/embed/wpj845xn7", css.editor)
 var chat = iframe("https://gitter.im/wizardamigosinstitute/program/~embed", css.chat)
 
 
