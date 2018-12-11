@@ -1,11 +1,139 @@
-(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-var hyperx = require('hyperx')
-
+(function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 var trailingNewlineRegex = /\n[\s]+$/
 var leadingNewlineRegex = /^\n[\s]+/
 var trailingSpaceRegex = /[\s]+$/
 var leadingSpaceRegex = /^[\s]+/
 var multiSpaceRegex = /[\n\s]+/g
+
+var TEXT_TAGS = [
+  'a', 'abbr', 'b', 'bdi', 'bdo', 'br', 'cite', 'data', 'dfn', 'em', 'i',
+  'kbd', 'mark', 'q', 'rp', 'rt', 'rtc', 'ruby', 's', 'amp', 'small', 'span',
+  'strong', 'sub', 'sup', 'time', 'u', 'var', 'wbr'
+]
+
+var VERBATIM_TAGS = [
+  'code', 'pre', 'textarea'
+]
+
+module.exports = function appendChild (el, childs) {
+  if (!Array.isArray(childs)) return
+
+  var nodeName = el.nodeName.toLowerCase()
+
+  var hadText = false
+  var value, leader
+
+  for (var i = 0, len = childs.length; i < len; i++) {
+    var node = childs[i]
+    if (Array.isArray(node)) {
+      appendChild(el, node)
+      continue
+    }
+
+    if (typeof node === 'number' ||
+      typeof node === 'boolean' ||
+      typeof node === 'function' ||
+      node instanceof Date ||
+      node instanceof RegExp) {
+      node = node.toString()
+    }
+
+    var lastChild = el.childNodes[el.childNodes.length - 1]
+
+    // Iterate over text nodes
+    if (typeof node === 'string') {
+      hadText = true
+
+      // If we already had text, append to the existing text
+      if (lastChild && lastChild.nodeName === '#text') {
+        lastChild.nodeValue += node
+
+      // We didn't have a text node yet, create one
+      } else {
+        node = document.createTextNode(node)
+        el.appendChild(node)
+        lastChild = node
+      }
+
+      // If this is the last of the child nodes, make sure we close it out
+      // right
+      if (i === len - 1) {
+        hadText = false
+        // Trim the child text nodes if the current node isn't a
+        // node where whitespace matters.
+        if (TEXT_TAGS.indexOf(nodeName) === -1 &&
+          VERBATIM_TAGS.indexOf(nodeName) === -1) {
+          value = lastChild.nodeValue
+            .replace(leadingNewlineRegex, '')
+            .replace(trailingSpaceRegex, '')
+            .replace(trailingNewlineRegex, '')
+            .replace(multiSpaceRegex, ' ')
+          if (value === '') {
+            el.removeChild(lastChild)
+          } else {
+            lastChild.nodeValue = value
+          }
+        } else if (VERBATIM_TAGS.indexOf(nodeName) === -1) {
+          // The very first node in the list should not have leading
+          // whitespace. Sibling text nodes should have whitespace if there
+          // was any.
+          leader = i === 0 ? '' : ' '
+          value = lastChild.nodeValue
+            .replace(leadingNewlineRegex, leader)
+            .replace(leadingSpaceRegex, ' ')
+            .replace(trailingSpaceRegex, '')
+            .replace(trailingNewlineRegex, '')
+            .replace(multiSpaceRegex, ' ')
+          lastChild.nodeValue = value
+        }
+      }
+
+    // Iterate over DOM nodes
+    } else if (node && node.nodeType) {
+      // If the last node was a text node, make sure it is properly closed out
+      if (hadText) {
+        hadText = false
+
+        // Trim the child text nodes if the current node isn't a
+        // text node or a code node
+        if (TEXT_TAGS.indexOf(nodeName) === -1 &&
+          VERBATIM_TAGS.indexOf(nodeName) === -1) {
+          value = lastChild.nodeValue
+            .replace(leadingNewlineRegex, '')
+            .replace(trailingNewlineRegex, '')
+            .replace(multiSpaceRegex, ' ')
+
+          // Remove empty text nodes, append otherwise
+          if (value === '') {
+            el.removeChild(lastChild)
+          } else {
+            lastChild.nodeValue = value
+          }
+        // Trim the child nodes if the current node is not a node
+        // where all whitespace must be preserved
+        } else if (VERBATIM_TAGS.indexOf(nodeName) === -1) {
+          value = lastChild.nodeValue
+            .replace(leadingSpaceRegex, ' ')
+            .replace(leadingNewlineRegex, '')
+            .replace(trailingNewlineRegex, '')
+            .replace(multiSpaceRegex, ' ')
+          lastChild.nodeValue = value
+        }
+      }
+
+      // Store the last nodename
+      var _nodeName = node.nodeName
+      if (_nodeName) nodeName = _nodeName.toLowerCase()
+
+      // Append the node to the DOM
+      el.appendChild(node)
+    }
+  }
+}
+
+},{}],2:[function(require,module,exports){
+var hyperx = require('hyperx')
+var appendChild = require('./appendChild')
 
 var SVGNS = 'http://www.w3.org/2000/svg'
 var XLINKNS = 'http://www.w3.org/1999/xlink'
@@ -16,16 +144,6 @@ var BOOL_PROPS = [
 ]
 
 var COMMENT_TAG = '!--'
-
-var TEXT_TAGS = [
-  'a', 'abbr', 'b', 'bdi', 'bdo', 'br', 'cite', 'data', 'dfn', 'em', 'i',
-  'kbd', 'mark', 'q', 'rp', 'rt', 'rtc', 'ruby', 's', 'amp', 'small', 'span',
-  'strong', 'sub', 'sup', 'time', 'u', 'var', 'wbr'
-]
-
-var CODE_TAGS = [
-  'code', 'pre'
-]
 
 var SVG_TAGS = [
   'svg', 'altGlyph', 'altGlyphDef', 'altGlyphItem', 'animate', 'animateColor',
@@ -68,8 +186,6 @@ function belCreateElement (tag, props, children) {
     el = document.createElement(tag)
   }
 
-  var nodeName = el.nodeName.toLowerCase()
-
   // Create the properties
   for (var p in props) {
     if (props.hasOwnProperty(p)) {
@@ -108,129 +224,15 @@ function belCreateElement (tag, props, children) {
     }
   }
 
-  appendChild(children)
+  appendChild(el, children)
   return el
-
-  function appendChild (childs) {
-    if (!Array.isArray(childs)) return
-
-    var hadText = false
-    var value, leader
-
-    for (var i = 0, len = childs.length; i < len; i++) {
-      var node = childs[i]
-      if (Array.isArray(node)) {
-        appendChild(node)
-        continue
-      }
-
-      if (typeof node === 'number' ||
-        typeof node === 'boolean' ||
-        typeof node === 'function' ||
-        node instanceof Date ||
-        node instanceof RegExp) {
-        node = node.toString()
-      }
-
-      var lastChild = el.childNodes[el.childNodes.length - 1]
-
-      // Iterate over text nodes
-      if (typeof node === 'string') {
-        hadText = true
-
-        // If we already had text, append to the existing text
-        if (lastChild && lastChild.nodeName === '#text') {
-          lastChild.nodeValue += node
-
-        // We didn't have a text node yet, create one
-        } else {
-          node = document.createTextNode(node)
-          el.appendChild(node)
-          lastChild = node
-        }
-
-        // If this is the last of the child nodes, make sure we close it out
-        // right
-        if (i === len - 1) {
-          hadText = false
-          // Trim the child text nodes if the current node isn't a
-          // node where whitespace matters.
-          if (TEXT_TAGS.indexOf(nodeName) === -1 &&
-            CODE_TAGS.indexOf(nodeName) === -1) {
-            value = lastChild.nodeValue
-              .replace(leadingNewlineRegex, '')
-              .replace(trailingSpaceRegex, '')
-              .replace(trailingNewlineRegex, '')
-              .replace(multiSpaceRegex, ' ')
-            if (value === '') {
-              el.removeChild(lastChild)
-            } else {
-              lastChild.nodeValue = value
-            }
-          } else if (CODE_TAGS.indexOf(nodeName) === -1) {
-            // The very first node in the list should not have leading
-            // whitespace. Sibling text nodes should have whitespace if there
-            // was any.
-            leader = i === 0 ? '' : ' '
-            value = lastChild.nodeValue
-              .replace(leadingNewlineRegex, leader)
-              .replace(leadingSpaceRegex, ' ')
-              .replace(trailingSpaceRegex, '')
-              .replace(trailingNewlineRegex, '')
-              .replace(multiSpaceRegex, ' ')
-            lastChild.nodeValue = value
-          }
-        }
-
-      // Iterate over DOM nodes
-      } else if (node && node.nodeType) {
-        // If the last node was a text node, make sure it is properly closed out
-        if (hadText) {
-          hadText = false
-
-          // Trim the child text nodes if the current node isn't a
-          // text node or a code node
-          if (TEXT_TAGS.indexOf(nodeName) === -1 &&
-            CODE_TAGS.indexOf(nodeName) === -1) {
-            value = lastChild.nodeValue
-              .replace(leadingNewlineRegex, '')
-              .replace(trailingNewlineRegex, '')
-              .replace(multiSpaceRegex, ' ')
-
-            // Remove empty text nodes, append otherwise
-            if (value === '') {
-              el.removeChild(lastChild)
-            } else {
-              lastChild.nodeValue = value
-            }
-          // Trim the child nodes if the current node is not a node
-          // where all whitespace must be preserved
-          } else if (CODE_TAGS.indexOf(nodeName) === -1) {
-            value = lastChild.nodeValue
-              .replace(leadingSpaceRegex, ' ')
-              .replace(leadingNewlineRegex, '')
-              .replace(trailingNewlineRegex, '')
-              .replace(multiSpaceRegex, ' ')
-            lastChild.nodeValue = value
-          }
-        }
-
-        // Store the last nodename
-        var _nodeName = node.nodeName
-        if (_nodeName) nodeName = _nodeName.toLowerCase()
-
-        // Append the node to the DOM
-        el.appendChild(node)
-      }
-    }
-  }
 }
 
 module.exports = hyperx(belCreateElement, {comments: true})
 module.exports.default = module.exports
 module.exports.createElement = belCreateElement
 
-},{"hyperx":22}],2:[function(require,module,exports){
+},{"./appendChild":1,"hyperx":23}],3:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -249,12 +251,12 @@ function csjsInserter() {
 module.exports = csjsInserter;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"csjs":7,"insert-css":23}],3:[function(require,module,exports){
+},{"csjs":8,"insert-css":24}],4:[function(require,module,exports){
 'use strict';
 
 module.exports = require('csjs/get-css');
 
-},{"csjs/get-css":6}],4:[function(require,module,exports){
+},{"csjs/get-css":7}],5:[function(require,module,exports){
 'use strict';
 
 var csjs = require('./csjs');
@@ -263,17 +265,17 @@ module.exports = csjs;
 module.exports.csjs = csjs;
 module.exports.getCss = require('./get-css');
 
-},{"./csjs":2,"./get-css":3}],5:[function(require,module,exports){
+},{"./csjs":3,"./get-css":4}],6:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib/csjs');
 
-},{"./lib/csjs":11}],6:[function(require,module,exports){
+},{"./lib/csjs":12}],7:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib/get-css');
 
-},{"./lib/get-css":15}],7:[function(require,module,exports){
+},{"./lib/get-css":16}],8:[function(require,module,exports){
 'use strict';
 
 var csjs = require('./csjs');
@@ -283,7 +285,7 @@ module.exports.csjs = csjs;
 module.exports.noScope = csjs({ noscope: true });
 module.exports.getCss = require('./get-css');
 
-},{"./csjs":5,"./get-css":6}],8:[function(require,module,exports){
+},{"./csjs":6,"./get-css":7}],9:[function(require,module,exports){
 'use strict';
 
 /**
@@ -305,7 +307,7 @@ module.exports = function encode(integer) {
   return str;
 };
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 'use strict';
 
 var makeComposition = require('./composition').makeComposition;
@@ -349,7 +351,7 @@ function getClassChain(obj) {
   return acc;
 }
 
-},{"./composition":10}],10:[function(require,module,exports){
+},{"./composition":11}],11:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -429,7 +431,7 @@ function ignoreComposition(values) {
  */
 function Composition() {}
 
-},{}],11:[function(require,module,exports){
+},{}],12:[function(require,module,exports){
 'use strict';
 
 var extractExtends = require('./css-extract-extends');
@@ -507,7 +509,7 @@ function without(obj, unwanted) {
   }, {});
 }
 
-},{"./build-exports":9,"./composition":10,"./css-extract-extends":12,"./css-key":13,"./extract-exports":14,"./scopeify":20}],12:[function(require,module,exports){
+},{"./build-exports":10,"./composition":11,"./css-extract-extends":13,"./css-key":14,"./extract-exports":15,"./scopeify":21}],13:[function(require,module,exports){
 'use strict';
 
 var makeComposition = require('./composition').makeComposition;
@@ -560,7 +562,7 @@ function getClassName(str) {
   return trimmed[0] === '.' ? trimmed.substr(1) : trimmed;
 }
 
-},{"./composition":10}],13:[function(require,module,exports){
+},{"./composition":11}],14:[function(require,module,exports){
 'use strict';
 
 /**
@@ -570,7 +572,7 @@ function getClassName(str) {
 
 module.exports = ' css ';
 
-},{}],14:[function(require,module,exports){
+},{}],15:[function(require,module,exports){
 'use strict';
 
 var regex = require('./regex');
@@ -597,7 +599,7 @@ function getExport(css, regex) {
   return prop;
 }
 
-},{"./regex":17}],15:[function(require,module,exports){
+},{"./regex":18}],16:[function(require,module,exports){
 'use strict';
 
 var cssKey = require('./css-key');
@@ -606,7 +608,7 @@ module.exports = function getCss(csjs) {
   return csjs[cssKey];
 };
 
-},{"./css-key":13}],16:[function(require,module,exports){
+},{"./css-key":14}],17:[function(require,module,exports){
 'use strict';
 
 /**
@@ -624,7 +626,7 @@ module.exports = function hashStr(str) {
   return hash >>> 0;
 };
 
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
 'use strict';
 
 var findClasses = /(\.)(?!\d)([^\s\.,{\[>+~#:)]*)(?![^{]*})/.source;
@@ -640,7 +642,7 @@ module.exports = {
   ignoreComments: ignoreComments,
 };
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 var ignoreComments = require('./regex').ignoreComments;
 
 module.exports = replaceAnimations;
@@ -671,7 +673,7 @@ function replaceAnimations(result) {
   return result;
 }
 
-},{"./regex":17}],19:[function(require,module,exports){
+},{"./regex":18}],20:[function(require,module,exports){
 'use strict';
 
 var encode = require('./base62-encode');
@@ -685,7 +687,7 @@ module.exports = function fileScoper(fileSrc) {
   }
 };
 
-},{"./base62-encode":8,"./hash-string":16}],20:[function(require,module,exports){
+},{"./base62-encode":9,"./hash-string":17}],21:[function(require,module,exports){
 'use strict';
 
 var fileScoper = require('./scoped-name');
@@ -726,7 +728,7 @@ function scopify(css, ignores) {
   return replaceAnimations(result);
 }
 
-},{"./regex":17,"./replace-animations":18,"./scoped-name":19}],21:[function(require,module,exports){
+},{"./regex":18,"./replace-animations":19,"./scoped-name":20}],22:[function(require,module,exports){
 module.exports = attributeToProperty
 
 var transform = {
@@ -747,7 +749,7 @@ function attributeToProperty (h) {
   }
 }
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var attrToProp = require('hyperscript-attribute-to-property')
 
 var VAR = 0, TEXT = 1, OPEN = 2, CLOSE = 3, ATTR = 4
@@ -780,7 +782,16 @@ module.exports = function (h, opts) {
         if (xstate === ATTR_VALUE_SQ) xstate = ATTR_VALUE
         if (xstate === ATTR_VALUE_W) xstate = ATTR_VALUE
         if (xstate === ATTR) xstate = ATTR_KEY
-        p.push([ VAR, xstate, arg ])
+        if (xstate === OPEN) {
+          if (reg === '/') {
+            p.push([ OPEN, '/', arg ])
+            reg = ''
+          } else {
+            p.push([ OPEN, arg ])
+          }
+        } else {
+          p.push([ VAR, xstate, arg ])
+        }
         parts.push.apply(parts, p)
       } else parts.push.apply(parts, parse(strings[i]))
     }
@@ -825,17 +836,20 @@ module.exports = function (h, opts) {
         for (; i < parts.length; i++) {
           if (parts[i][0] === ATTR_VALUE || parts[i][0] === ATTR_KEY) {
             if (!cur[1][key]) cur[1][key] = strfn(parts[i][1])
-            else cur[1][key] = concat(cur[1][key], parts[i][1])
+            else parts[i][1]==="" || (cur[1][key] = concat(cur[1][key], parts[i][1]));
           } else if (parts[i][0] === VAR
           && (parts[i][1] === ATTR_VALUE || parts[i][1] === ATTR_KEY)) {
             if (!cur[1][key]) cur[1][key] = strfn(parts[i][2])
-            else cur[1][key] = concat(cur[1][key], parts[i][2])
+            else parts[i][2]==="" || (cur[1][key] = concat(cur[1][key], parts[i][2]));
           } else {
             if (key.length && !cur[1][key] && i === j
             && (parts[i][0] === CLOSE || parts[i][0] === ATTR_BREAK)) {
               // https://html.spec.whatwg.org/multipage/infrastructure.html#boolean-attributes
               // empty string is falsy, not well behaved value in browser
               cur[1][key] = key.toLowerCase()
+            }
+            if (parts[i][0] === CLOSE) {
+              i--
             }
             break
           }
@@ -875,6 +889,7 @@ module.exports = function (h, opts) {
 
     if (tree[2].length > 2
     || (tree[2].length === 2 && /\S/.test(tree[2][1]))) {
+      if (opts.createFragment) return opts.createFragment(tree[2])
       throw new Error(
         'multiple root elements must be wrapped in an enclosing tag'
       )
@@ -895,7 +910,7 @@ module.exports = function (h, opts) {
           reg = ''
           state = OPEN
         } else if (c === '>' && !quot(state) && state !== COMMENT) {
-          if (state === OPEN) {
+          if (state === OPEN && reg.length) {
             res.push([OPEN,reg])
           } else if (state === ATTR_KEY) {
             res.push([ATTR_KEY,reg])
@@ -919,8 +934,12 @@ module.exports = function (h, opts) {
           state = COMMENT
         } else if (state === TEXT || state === COMMENT) {
           reg += c
+        } else if (state === OPEN && c === '/' && reg.length) {
+          // no-op, self closing tag without a space <br/>
         } else if (state === OPEN && /\s/.test(c)) {
-          res.push([OPEN, reg])
+          if (reg.length) {
+            res.push([OPEN, reg])
+          }
           reg = ''
           state = ATTR
         } else if (state === OPEN) {
@@ -1006,9 +1025,6 @@ function quot (state) {
   return state === ATTR_VALUE_SQ || state === ATTR_VALUE_DQ
 }
 
-var hasOwn = Object.prototype.hasOwnProperty
-function has (obj, key) { return hasOwn.call(obj, key) }
-
 var closeRE = RegExp('^(' + [
   'area', 'base', 'basefont', 'bgsound', 'br', 'col', 'command', 'embed',
   'frame', 'hr', 'img', 'input', 'isindex', 'keygen', 'link', 'meta', 'param',
@@ -1027,7 +1043,7 @@ var closeRE = RegExp('^(' + [
 ].join('|') + ')(?:[\.#][a-zA-Z0-9\u007F-\uFFFF_:-]+)*$')
 function selfClosing (tag) { return closeRE.test(tag) }
 
-},{"hyperscript-attribute-to-property":21}],23:[function(require,module,exports){
+},{"hyperscript-attribute-to-property":22}],24:[function(require,module,exports){
 var inserted = {};
 
 module.exports = function (css, options) {
@@ -1051,7 +1067,7 @@ module.exports = function (css, options) {
     }
 };
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var csjs = require('csjs-inject')
 var bel = require('bel')
 
@@ -1304,4 +1320,4 @@ function home () {
   window.open('http://wizardamigos.com/', '_blank');
 }
 
-},{"bel":1,"csjs-inject":4}]},{},[24]);
+},{"bel":2,"csjs-inject":5}]},{},[25]);
